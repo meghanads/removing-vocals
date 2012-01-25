@@ -1,0 +1,47 @@
+%% Function ISTFT
+%           X=ISTFT(Y,P,W,F)
+%
+%   X: Recovered signal form its STFT
+%   Y: input STFT of signal
+%   P: DFT points
+%   W: Window Size
+%   F: Offset between frames.
+%
+
+%% Built-in Functions Used:
+%   IFFT
+
+
+%% Function Definetion:
+
+function X = ISTFT(Y,P,W,F)
+
+s = size();
+ 
+cols = s(2);
+xlen = P + cols * (F);
+X = zeros(1,xlen);
+
+if rem(W, 2) == 0   % force window to be odd-len
+  W = W + 1;
+end
+
+win = zeros(1, P);
+
+hp = P/2;   % midpoint of win
+hw = (W-1)/2;
+eff_hlen = min(hp, hw);
+
+%halfwin = 0.5 * ( 1 + cos( pi * (0:halflen)/halflen));
+Bwin= 0.42 -0.5*cos(2*pi*(0:eff_hlen)/eff_hlen)+0.08*cos(4*pi*(0:eff_hlen)/eff_hlen);
+win((hp+1):(hp+eff_hlen)) = Bwin(1:eff_hlen);
+win((hp+1):-1:(hp-eff_hlen+2)) = Bwin(1:eff_hlen);
+
+for b = 0:F:(F*(cols-1))
+  ft = Y(:,1+b/F)';
+  ft = [ft, conj(ft([((P/2)):-1:2]))];
+  px = real(ifft(ft));
+  x((b+1):(b+P)) = x((b+1):(b+P))+px.*win;
+end;
+
+end
